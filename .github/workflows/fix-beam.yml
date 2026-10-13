@@ -1,0 +1,37 @@
+name: Validate and fix charged beam
+on:
+  push:
+    paths:
+      - .github/workflows/fix-beam.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix charged beam asteroid collision and verify JavaScript
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          old = "beamHit(r,r,'rock'+clock+'-'+i,r.r,()=>hitRock(i))"
+          new = "beamHit(r,r,r.r,()=>hitRock(i))"
+          assert s.count(old) == 1, 'Expected exact original call once; refuse to alter changed source'
+          p.write_text(s.replace(old,new))
+          start = s.index('<script>') + len('<script>')
+          end = s.index('</script>', start)
+          Path('/tmp/game.js').write_text(s[start:end].replace(old,new))
+          for feature in ('spawnCometNow','spawnUFO','defeatBoss','makeHazard','awardDrop','countdown','pause','localStorage','beamHit'):
+              assert feature in s, feature
+          PY
+          node --check /tmp/game.js
+      - name: Commit the precise bug fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Fix charged beam collision with asteroids'
+          git push
