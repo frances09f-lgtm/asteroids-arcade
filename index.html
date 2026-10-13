@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Retro Asteroids Arcade</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
       background: #05050a;
       color: #00ffcc;
@@ -15,93 +15,107 @@
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      overflow: hidden;
-      touch-action: none;
+      min-height: 100dvh;
+      padding: 10px;
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
+    #game-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 800px;
     }
     #game-container {
       position: relative;
+      width: 100%;
       border: 2px solid #00ffcc;
       box-shadow: 0 0 25px rgba(0, 255, 204, 0.45);
       border-radius: 8px;
       overflow: hidden;
-      max-width: 98vw;
-      max-height: 92vh;
+      background: #020205;
+      max-height: 65vh;
     }
     canvas {
       display: block;
+      width: 100%;
+      height: 100%;
+      max-height: 65vh;
+      object-fit: contain;
+      aspect-ratio: 4 / 3;
       background: radial-gradient(circle at center, #0a0b16 0%, #020205 100%);
-      max-width: 100%;
-      height: auto;
     }
     #ui {
       position: absolute;
-      top: 12px;
-      left: 15px;
-      right: 15px;
+      top: 8px;
+      left: 10px;
+      right: 10px;
       display: flex;
       justify-content: space-between;
-      font-size: 16px;
+      font-size: 13px;
       font-weight: bold;
       pointer-events: none;
       text-shadow: 0 0 10px #00ffcc;
       z-index: 5;
     }
     .hud-chip {
-      background: rgba(0, 255, 204, 0.08);
+      background: rgba(0, 255, 204, 0.12);
       border: 1px solid rgba(0, 255, 204, 0.4);
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: 4px;
+      font-size: 12px;
     }
     .screen-overlay {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(5, 5, 12, 0.88);
+      background: rgba(5, 5, 12, 0.92);
       backdrop-filter: blur(4px);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 24px;
+      padding: 16px;
       z-index: 20;
     }
     .screen-overlay h1 {
-      font-size: 38px;
+      font-size: 30px;
       letter-spacing: 3px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       color: #00ffcc;
       text-shadow: 0 0 20px #00ffcc, 0 0 40px #00aaff;
     }
     .screen-overlay .tagline {
-      font-size: 14px;
+      font-size: 13px;
       color: #ff3388;
       letter-spacing: 2px;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       text-shadow: 0 0 10px #ff3388;
     }
     .card-box {
       background: rgba(0, 255, 204, 0.05);
       border: 1px solid rgba(0, 255, 204, 0.3);
-      padding: 14px 20px;
+      padding: 10px 14px;
       border-radius: 6px;
-      max-width: 440px;
-      font-size: 13px;
+      max-width: 420px;
+      font-size: 12px;
       color: #e0e6ed;
-      line-height: 1.6;
-      margin-bottom: 22px;
+      line-height: 1.5;
+      margin-bottom: 14px;
       text-align: left;
     }
     .card-box b { color: #00ffcc; }
     .highscore-banner {
-      font-size: 16px;
+      font-size: 14px;
       color: #ffcc00;
       text-shadow: 0 0 10px #ffaa00;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
       font-weight: bold;
     }
     .arcade-btn {
-      padding: 12px 34px;
-      font-size: 18px;
+      padding: 10px 28px;
+      font-size: 16px;
       font-weight: bold;
       letter-spacing: 2px;
       font-family: inherit;
@@ -114,117 +128,160 @@
       box-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
       transition: all 0.15s ease-in-out;
     }
-    .arcade-btn:hover {
+    .arcade-btn:hover, .arcade-btn:active {
       background: #00ffcc;
       color: #05050a;
       box-shadow: 0 0 25px #00ffcc;
-      transform: scale(1.05);
+      transform: scale(1.04);
     }
-    /* Moved upside touch controls directly inside game view with lifted bottom */
-    .touch-controls {
-      display: none;
-      position: absolute;
-      bottom: 28px;
-      left: 18px;
-      right: 18px;
+    /* Always-Visible Device Responsive Controls Dock */
+    .controls-dock {
+      display: flex;
       justify-content: space-between;
       align-items: center;
-      pointer-events: none;
-      z-index: 10;
+      width: 100%;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: rgba(10, 15, 26, 0.95);
+      border: 1px solid rgba(0, 255, 204, 0.35);
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+      z-index: 30;
+      touch-action: none;
     }
-    @media (pointer: coarse), (max-width: 820px) {
-      .touch-controls { display: flex; }
-    }
-    .touch-group {
+    .control-group {
       display: flex;
-      gap: 14px;
-      pointer-events: auto;
+      gap: 12px;
     }
-    .touch-btn {
-      width: 58px;
-      height: 58px;
+    .arcade-touch-btn {
+      width: 62px;
+      height: 62px;
       border: 2px solid #00ffcc;
-      border-radius: 50%;
+      border-radius: 12px;
       background: rgba(0, 255, 204, 0.15);
       color: #00ffcc;
-      font-size: 22px;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       user-select: none;
       -webkit-user-select: none;
       box-shadow: 0 0 12px rgba(0, 255, 204, 0.35);
-      backdrop-filter: blur(2px);
-      transition: background 0.1s;
+      cursor: pointer;
+      font-family: inherit;
+      touch-action: none;
+      transition: transform 0.08s, background 0.08s;
     }
-    .touch-btn:active {
-      background: rgba(0, 255, 204, 0.45);
-      transform: scale(0.94);
+    .arcade-touch-btn:active, .arcade-touch-btn.active {
+      background: rgba(0, 255, 204, 0.5);
+      transform: scale(0.93);
+    }
+    .arcade-touch-btn .btn-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+    .arcade-touch-btn .btn-txt {
+      font-size: 9px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+    .btn-speed {
+      border-color: #ffaa00;
+      color: #ffaa00;
+      background: rgba(255, 170, 0, 0.15);
+      box-shadow: 0 0 12px rgba(255, 170, 0, 0.35);
+    }
+    .btn-speed:active, .btn-speed.active {
+      background: rgba(255, 170, 0, 0.5);
     }
     .btn-fire {
       border-color: #ff3388;
       color: #ff3388;
-      box-shadow: 0 0 12px rgba(255, 51, 136, 0.4);
       background: rgba(255, 51, 136, 0.15);
-      font-size: 24px;
+      box-shadow: 0 0 12px rgba(255, 51, 136, 0.35);
     }
-    .btn-fire:active {
+    .btn-fire:active, .btn-fire.active {
       background: rgba(255, 51, 136, 0.5);
+    }
+    @media (max-width: 480px) {
+      .arcade-touch-btn {
+        width: 54px;
+        height: 54px;
+      }
+      .arcade-touch-btn .btn-icon { font-size: 18px; }
+      .arcade-touch-btn .btn-txt { font-size: 8px; }
+      .control-group { gap: 8px; }
+      .controls-dock { padding: 6px 8px; }
+      .screen-overlay h1 { font-size: 24px; }
+      .card-box { font-size: 11px; padding: 8px 12px; }
     }
   </style>
 </head>
 <body>
-  <div id="game-container">
-    <div id="ui">
-      <div class="hud-chip" id="score-el">SCORE: 0</div>
-      <div class="hud-chip" id="wave-el">WAVE: 1</div>
-      <div class="hud-chip" id="high-el">HIGH: 0</div>
-      <div class="hud-chip" id="lives-el">LIVES: 3</div>
+  <div id="game-wrapper">
+    <div id="game-container">
+      <div id="ui">
+        <div class="hud-chip" id="score-el">SCORE: 0</div>
+        <div class="hud-chip" id="wave-el">WAVE: 1</div>
+        <div class="hud-chip" id="high-el">HIGH: 0</div>
+        <div class="hud-chip" id="lives-el">LIVES: 3</div>
+      </div>
+
+      <!-- Start Page Overlay -->
+      <div class="screen-overlay" id="start-screen">
+        <h1>ASTEROIDS</h1>
+        <div class="tagline">🚀 INTERSTELLAR COMBAT</div>
+        <div class="highscore-banner" id="start-high">HIGH SCORE: 0</div>
+        <div class="card-box">
+          <div><b>CONTROLS:</b></div>
+          <div>• ◀ / ▶ or A/D — Steer Left / Right</div>
+          <div>• ▲ or W / SPEED — Thrusters</div>
+          <div>• 🔥 or SPACE / SHOOT — Blaster</div>
+          <div style="margin-top: 6px;"><b>POINTS:</b></div>
+          <div>• Big: +20 | Med: +50 | Small: +100</div>
+          <div>• Wave Clear Bonus: +500 × Wave</div>
+        </div>
+        <button class="arcade-btn" id="start-btn">LAUNCH MISSION</button>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div class="screen-overlay" id="gameover-screen" style="display: none;">
+        <h1 style="color: #ff3366; text-shadow: 0 0 25px #ff3366;">MISSION FAILED</h1>
+        <div class="tagline" id="gameover-reason">SPACECRAFT DESTROYED</div>
+        <div class="card-box" style="text-align: center; max-width: 300px;">
+          <div style="font-size: 18px; color: #00ffcc; margin-bottom: 4px;" id="final-score">FINAL: 0</div>
+          <div style="font-size: 13px; color: #ffcc00;" id="final-high">HIGH: 0</div>
+          <div style="font-size: 12px; color: #a0aec0; margin-top: 4px;" id="final-stats">WAVE REACHED: 1</div>
+        </div>
+        <button class="arcade-btn" id="restart-btn">RETRY</button>
+      </div>
+
+      <!-- Canvas -->
+      <canvas id="game" width="800" height="600"></canvas>
     </div>
 
-    <!-- Start Page Overlay -->
-    <div class="screen-overlay" id="start-screen">
-      <h1>ASTEROIDS</h1>
-      <div class="tagline">🚀 INTERSTELLAR COMBAT</div>
-      <div class="highscore-banner" id="start-high">HIGH SCORE: 0</div>
-      <div class="card-box">
-        <div><b>CONTROLS:</b></div>
-        <div>• ◀ / ▶ or A/D — Steer Ship</div>
-        <div>• ▲ or W — Rocket Thrusters</div>
-        <div>• SPACE or 🔥 — Plasma Blaster</div>
-        <div style="margin-top: 8px;"><b>SCORING SYSTEM:</b></div>
-        <div>• Big Asteroid: +20 pts</div>
-        <div>• Medium Asteroid: +50 pts</div>
-        <div>• Small Asteroid: +100 pts</div>
-        <div>• Wave Clear Bonus: +500 pts × Wave</div>
+    <!-- Responsive Arcade Controls Dock: Left, Right, Speed, Shoot -->
+    <div class="controls-dock">
+      <div class="control-group">
+        <button class="arcade-touch-btn" id="btn-left">
+          <span class="btn-icon">◀</span>
+          <span class="btn-txt">LEFT</span>
+        </button>
+        <button class="arcade-touch-btn" id="btn-right">
+          <span class="btn-icon">▶</span>
+          <span class="btn-txt">RIGHT</span>
+        </button>
       </div>
-      <button class="arcade-btn" id="start-btn">LAUNCH MISSION</button>
-    </div>
-
-    <!-- Game Over Overlay -->
-    <div class="screen-overlay" id="gameover-screen" style="display: none;">
-      <h1 style="color: #ff3366; text-shadow: 0 0 25px #ff3366;">MISSION FAILED</h1>
-      <div class="tagline" id="gameover-reason">SPACECRAFT DESTROYED</div>
-      <div class="card-box" style="text-align: center; max-width: 320px;">
-        <div style="font-size: 20px; color: #00ffcc; margin-bottom: 6px;" id="final-score">FINAL: 0</div>
-        <div style="font-size: 14px; color: #ffcc00;" id="final-high">HIGH: 0</div>
-        <div style="font-size: 13px; color: #a0aec0; margin-top: 6px;" id="final-stats">WAVE REACHED: 1</div>
-      </div>
-      <button class="arcade-btn" id="restart-btn">RETRY</button>
-    </div>
-
-    <!-- Canvas -->
-    <canvas id="game" width="800" height="600"></canvas>
-
-    <!-- On-screen Controls (lifted up for easy thumb reach) -->
-    <div class="touch-controls">
-      <div class="touch-group">
-        <button class="touch-btn" id="btn-left">◀</button>
-        <button class="touch-btn" id="btn-right">▶</button>
-      </div>
-      <div class="touch-group">
-        <button class="touch-btn" id="btn-thrust">▲</button>
-        <button class="touch-btn btn-fire" id="btn-fire">🔥</button>
+      <div class="control-group">
+        <button class="arcade-touch-btn btn-speed" id="btn-thrust">
+          <span class="btn-icon">▲</span>
+          <span class="btn-txt">SPEED</span>
+        </button>
+        <button class="arcade-touch-btn btn-fire" id="btn-fire">
+          <span class="btn-icon">🔥</span>
+          <span class="btn-txt">SHOOT</span>
+        </button>
       </div>
     </div>
   </div>
@@ -308,27 +365,40 @@
       if (e.code === 'Space') keys.space = false;
     });
 
-    function setupTouch(id, prop) {
+    // Touch & Mouse Handler for On-Screen Buttons
+    function bindControl(id, prop) {
       const el = document.getElementById(id);
       if (!el) return;
-      el.addEventListener('touchstart', e => {
-        e.preventDefault();
+
+      const press = (e) => {
+        if (e) e.preventDefault();
+        el.classList.add('active');
         if (prop === 'space') {
           if (inGame && !gameOver) shootLaser();
         } else {
           keys[prop] = true;
         }
-      }, { passive: false });
+      };
 
-      el.addEventListener('touchend', e => {
-        e.preventDefault();
+      const release = (e) => {
+        if (e) e.preventDefault();
+        el.classList.remove('active');
         if (prop !== 'space') keys[prop] = false;
-      }, { passive: false });
+      };
+
+      el.addEventListener('touchstart', press, { passive: false });
+      el.addEventListener('touchend', release, { passive: false });
+      el.addEventListener('touchcancel', release, { passive: false });
+
+      el.addEventListener('mousedown', press);
+      el.addEventListener('mouseup', release);
+      el.addEventListener('mouseleave', release);
     }
-    setupTouch('btn-left', 'left');
-    setupTouch('btn-right', 'right');
-    setupTouch('btn-thrust', 'up');
-    setupTouch('btn-fire', 'space');
+
+    bindControl('btn-left', 'left');
+    bindControl('btn-right', 'right');
+    bindControl('btn-thrust', 'up');
+    bindControl('btn-fire', 'space');
 
     function resetShip() {
       ship.x = canvas.width / 2;
@@ -336,7 +406,7 @@
       ship.xv = 0;
       ship.yv = 0;
       ship.a = -Math.PI / 2;
-      ship.invulnerable = 90; // invulnerable frames
+      ship.invulnerable = 90;
     }
 
     function createAsteroid(x, y, r) {
@@ -367,16 +437,17 @@
       }
     }
 
+    // Bullets only shoot forward from the front nose and never come back
     function shootLaser() {
-      if (lasers.length >= 7) return;
-      const tipX = ship.x + ship.r * 1.4 * Math.cos(ship.a);
-      const tipY = ship.y + ship.r * 1.4 * Math.sin(ship.a);
+      if (lasers.length >= 8) return;
+      const noseX = ship.x + ship.r * 1.5 * Math.cos(ship.a);
+      const noseY = ship.y + ship.r * 1.5 * Math.sin(ship.a);
+      const bulletSpeed = 12;
       lasers.push({
-        x: tipX,
-        y: tipY,
-        xv: 9.5 * Math.cos(ship.a) + ship.xv * 0.4,
-        yv: 9.5 * Math.sin(ship.a) + ship.yv * 0.4,
-        dist: 0
+        x: noseX,
+        y: noseY,
+        xv: Math.cos(ship.a) * bulletSpeed,
+        yv: Math.sin(ship.a) * bulletSpeed
       });
       playBeep(920, 'square', 0.08, 0.18);
     }
@@ -452,10 +523,9 @@
       if (keys.left) ship.a -= 0.075;
       if (keys.right) ship.a += 0.075;
       if (keys.up) {
-        ship.xv += 0.14 * Math.cos(ship.a);
-        ship.yv += 0.14 * Math.sin(ship.a);
+        ship.xv += 0.15 * Math.cos(ship.a);
+        ship.yv += 0.15 * Math.sin(ship.a);
         if (Math.random() < 0.35) playBeep(85, 'triangle', 0.04, 0.1);
-        // exhaust rocket smoke
         const rearX = ship.x - ship.r * 1.1 * Math.cos(ship.a);
         const rearY = ship.y - ship.r * 1.1 * Math.sin(ship.a);
         particles.push({
@@ -476,13 +546,14 @@
       ship.y = (ship.y + ship.yv + canvas.height) % canvas.height;
       if (ship.invulnerable > 0) ship.invulnerable--;
 
-      // Lasers
+      // Lasers: move strictly forward; NO screen wrapping (disappear off boundaries)
       for (let i = lasers.length - 1; i >= 0; i--) {
         const l = lasers[i];
-        l.x = (l.x + l.xv + canvas.width) % canvas.width;
-        l.y = (l.y + l.yv + canvas.height) % canvas.height;
-        l.dist += Math.hypot(l.xv, l.yv);
-        if (l.dist > canvas.width * 0.78) lasers.splice(i, 1);
+        l.x += l.xv;
+        l.y += l.yv;
+        if (l.x < 0 || l.x > canvas.width || l.y < 0 || l.y > canvas.height) {
+          lasers.splice(i, 1);
+        }
       }
 
       // Asteroids
@@ -527,7 +598,7 @@
         }
       }
 
-      // Next wave
+      // Wave clear
       if (asteroids.length === 0) {
         wave++;
         waveEl.textContent = 'WAVE: ' + wave;
@@ -544,7 +615,7 @@
         if (p.life <= 0) particles.splice(i, 1);
       }
 
-      // Floating scores
+      // Floating text
       for (let i = floatingTexts.length - 1; i >= 0; i--) {
         const t = floatingTexts[i];
         t.y += t.vy;
@@ -568,7 +639,6 @@
         ctx.shadowBlur = 18;
         const flameLen = r * 1.5 + Math.random() * 8;
         
-        // Outer flame (orange-red)
         ctx.fillStyle = '#ff3300';
         ctx.beginPath();
         ctx.moveTo(-r * 0.9, -r * 0.35);
@@ -577,7 +647,6 @@
         ctx.closePath();
         ctx.fill();
 
-        // Inner core flame (bright yellow)
         ctx.fillStyle = '#ffea00';
         ctx.beginPath();
         ctx.moveTo(-r * 0.9, -r * 0.2);
@@ -588,18 +657,18 @@
         ctx.restore();
       }
 
-      // Spaceship Hull - Futuristic Rocket Design
+      // Hull
       ctx.shadowColor = '#00ffcc';
       ctx.shadowBlur = 12;
 
-      // Rocket Wings / Fins
+      // Fins
       ctx.fillStyle = '#0a233a';
       ctx.strokeStyle = '#00e5ff';
       ctx.lineWidth = 1.8;
 
       ctx.beginPath();
       ctx.moveTo(-r * 0.2, -r * 0.45);
-      ctx.lineTo(-r * 0.85, -r * 1.05); // Left wing tip
+      ctx.lineTo(-r * 0.85, -r * 1.05);
       ctx.lineTo(-r * 0.6, -r * 0.45);
       ctx.closePath();
       ctx.fill();
@@ -607,18 +676,18 @@
 
       ctx.beginPath();
       ctx.moveTo(-r * 0.2, r * 0.45);
-      ctx.lineTo(-r * 0.85, r * 1.05); // Right wing tip
+      ctx.lineTo(-r * 0.85, r * 1.05);
       ctx.lineTo(-r * 0.6, r * 0.45);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
 
-      // Wingtip Cannons
+      // Cannons
       ctx.fillStyle = '#ff3388';
       ctx.fillRect(-r * 0.9, -r * 1.08, r * 0.4, 2);
       ctx.fillRect(-r * 0.9, r * 1.05, r * 0.4, 2);
 
-      // Rocket Main Fuselage
+      // Fuselage
       const fuselageGrad = ctx.createLinearGradient(-r, 0, r * 1.4, 0);
       fuselageGrad.addColorStop(0, '#0c2742');
       fuselageGrad.addColorStop(0.6, '#174f7c');
@@ -628,9 +697,9 @@
       ctx.lineWidth = 2;
 
       ctx.beginPath();
-      ctx.moveTo(r * 1.4, 0); // Rocket nose cone
+      ctx.moveTo(r * 1.4, 0);
       ctx.quadraticCurveTo(r * 0.6, -r * 0.5, -r * 0.8, -r * 0.42);
-      ctx.lineTo(-r * 0.9, -r * 0.25); // Engine housing
+      ctx.lineTo(-r * 0.9, -r * 0.25);
       ctx.lineTo(-r * 0.9, r * 0.25);
       ctx.lineTo(-r * 0.8, r * 0.42);
       ctx.quadraticCurveTo(r * 0.6, r * 0.5, r * 1.4, 0);
@@ -638,7 +707,7 @@
       ctx.fill();
       ctx.stroke();
 
-      // Cockpit Dome / Canopy (Cyan glowing glass)
+      // Cockpit Dome
       ctx.save();
       ctx.shadowColor = '#00ffff';
       ctx.shadowBlur = 10;
@@ -648,7 +717,7 @@
       ctx.fill();
       ctx.restore();
 
-      // Hull Panel Seam & Accents
+      // Panel seam
       ctx.strokeStyle = '#00ffcc';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -663,7 +732,7 @@
       ctx.fillStyle = '#04050b';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Distant stars background
+      // Stars
       ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
       for (let i = 0; i < 35; i++) {
         const sx = ((i * 137) % canvas.width);
