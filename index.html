@@ -27,6 +27,27 @@
       width: 100%;
       max-width: 800px;
     }
+    /* Top HUD stats moved outside the main game container */
+    #top-hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 8px;
+      gap: 6px;
+    }
+    .hud-chip {
+      background: rgba(0, 255, 204, 0.12);
+      border: 1px solid rgba(0, 255, 204, 0.45);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: bold;
+      text-shadow: 0 0 10px #00ffcc;
+      box-shadow: 0 0 10px rgba(0, 255, 204, 0.15);
+      flex: 1;
+      text-align: center;
+    }
     #game-container {
       position: relative;
       width: 100%;
@@ -45,26 +66,6 @@
       object-fit: contain;
       aspect-ratio: 4 / 3;
       background: radial-gradient(circle at center, #0a0b16 0%, #020205 100%);
-    }
-    #ui {
-      position: absolute;
-      top: 8px;
-      left: 10px;
-      right: 10px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      font-weight: bold;
-      pointer-events: none;
-      text-shadow: 0 0 10px #00ffcc;
-      z-index: 5;
-    }
-    .hud-chip {
-      background: rgba(0, 255, 204, 0.12);
-      border: 1px solid rgba(0, 255, 204, 0.4);
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 12px;
     }
     .screen-overlay {
       position: absolute;
@@ -205,6 +206,7 @@
       background: rgba(255, 51, 136, 0.5);
     }
     @media (max-width: 480px) {
+      .hud-chip { font-size: 11px; padding: 4px 6px; }
       .arcade-touch-btn {
         width: 54px;
         height: 54px;
@@ -220,14 +222,15 @@
 </head>
 <body>
   <div id="game-wrapper">
-    <div id="game-container">
-      <div id="ui">
-        <div class="hud-chip" id="score-el">SCORE: 0</div>
-        <div class="hud-chip" id="wave-el">WAVE: 1</div>
-        <div class="hud-chip" id="high-el">HIGH: 0</div>
-        <div class="hud-chip" id="lives-el">LIVES: 3</div>
-      </div>
+    <!-- Score, Wave, High, Lives outside the main box on top -->
+    <div id="top-hud">
+      <div class="hud-chip" id="score-el">SCORE: 0</div>
+      <div class="hud-chip" id="wave-el">WAVE: 1</div>
+      <div class="hud-chip" id="high-el">HIGH: 0</div>
+      <div class="hud-chip" id="lives-el">LIVES: 3</div>
+    </div>
 
+    <div id="game-container">
       <!-- Start Page Overlay -->
       <div class="screen-overlay" id="start-screen">
         <h1>ASTEROIDS</h1>
@@ -238,6 +241,7 @@
           <div>• ◀ / ▶ or A/D — Steer Left / Right</div>
           <div>• ▲ or W / SPEED — Thrusters</div>
           <div>• 🔥 or SPACE / SHOOT — Blaster</div>
+          <div style="margin-top: 6px; color: #ff3366;"><b>WARNING:</b> Touching borders destroys your ship!</div>
           <div style="margin-top: 6px;"><b>POINTS:</b></div>
           <div>• Big: +20 | Med: +50 | Small: +100</div>
           <div>• Wave Clear Bonus: +500 × Wave</div>
@@ -299,6 +303,7 @@
     const startBtn = document.getElementById('start-btn');
 
     const gameOverScreen = document.getElementById('gameover-screen');
+    const gameoverReason = document.getElementById('gameover-reason');
     const finalScoreEl = document.getElementById('final-score');
     const finalHighEl = document.getElementById('final-high');
     const finalStatsEl = document.getElementById('final-stats');
@@ -508,13 +513,24 @@
     startBtn.addEventListener('click', startGame);
     restartBtn.addEventListener('click', startGame);
 
-    function triggerGameOver() {
+    function triggerGameOver(reason = 'SPACECRAFT DESTROYED') {
       gameOver = true;
       inGame = false;
+      gameoverReason.textContent = reason;
       finalScoreEl.textContent = 'FINAL: ' + score;
       finalHighEl.textContent = 'HIGH SCORE: ' + highScore;
       finalStatsEl.textContent = 'WAVE REACHED: ' + wave + ' | HIGH ' + (score >= highScore && score > 0 ? '✨ NEW RECORD!' : '');
       gameOverScreen.style.display = 'flex';
+    }
+
+    function destroyShip(reason = 'SPACECRAFT DESTROYED') {
+      explode(ship.x, ship.y, 32, '#ff3366');
+      lives--;
+      livesEl.textContent = 'LIVES: ' + lives;
+      resetShip();
+      if (lives <= 0) {
+        triggerGameOver(reason);
+      }
     }
 
     function update() {
@@ -542,8 +558,15 @@
         ship.yv *= 0.985;
       }
 
-      ship.x = (ship.x + ship.xv + canvas.width) % canvas.width;
-      ship.y = (ship.y + ship.yv + canvas.height) % canvas.height;
+      ship.x += ship.xv;
+      ship.y += ship.yv;
+
+      // Spaceship destroys when touching border (no screen wrapping)
+      if (ship.x - ship.r <= 0 || ship.x + ship.r >= canvas.width || ship.y - ship.r <= 0 || ship.y + ship.r >= canvas.height) {
+        destroyShip('CRASHED INTO BORDER');
+        return;
+      }
+
       if (ship.invulnerable > 0) ship.invulnerable--;
 
       // Lasers: move strictly forward; NO screen wrapping (disappear off boundaries)
@@ -565,15 +588,8 @@
 
         // Collision with ship
         if (ship.invulnerable <= 0 && Math.hypot(ship.x - a.x, ship.y - a.y) < ship.r + a.r * 0.8) {
-          explode(ship.x, ship.y, 30, '#ff3366');
-          lives--;
-          livesEl.textContent = 'LIVES: ' + lives;
-          resetShip();
-          if (lives <= 0) {
-            triggerGameOver();
-            return;
-          }
-          break;
+          destroyShip('DESTROYED BY ASTEROID');
+          return;
         }
 
         // Collision with lasers
@@ -792,7 +808,6 @@
         ctx.beginPath();
         ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.restore();
       }
 
       // Floating Score Numbers
