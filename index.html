@@ -27,7 +27,7 @@
       width: 100%;
       max-width: 800px;
     }
-    /* Top HUD stats moved outside the main game container */
+    /* Top HUD stats outside the main game container */
     #top-hud {
       display: flex;
       justify-content: space-between;
@@ -65,7 +65,7 @@
       max-height: 65vh;
       object-fit: contain;
       aspect-ratio: 4 / 3;
-      background: radial-gradient(circle at center, #0a0b16 0%, #020205 100%);
+      background: #04050b;
     }
     .screen-overlay {
       position: absolute;
@@ -650,9 +650,6 @@
 
       // Rocket Exhaust Flame
       if (thrusting) {
-        ctx.save();
-        ctx.shadowColor = '#ff6600';
-        ctx.shadowBlur = 18;
         const flameLen = r * 1.5 + Math.random() * 8;
         
         ctx.fillStyle = '#ff3300';
@@ -670,12 +667,7 @@
         ctx.lineTo(-r * 0.9, r * 0.2);
         ctx.closePath();
         ctx.fill();
-        ctx.restore();
       }
-
-      // Hull
-      ctx.shadowColor = '#00ffcc';
-      ctx.shadowBlur = 12;
 
       // Fins
       ctx.fillStyle = '#0a233a';
@@ -724,14 +716,10 @@
       ctx.stroke();
 
       // Cockpit Dome
-      ctx.save();
-      ctx.shadowColor = '#00ffff';
-      ctx.shadowBlur = 10;
       ctx.fillStyle = '#00ffff';
       ctx.beginPath();
       ctx.ellipse(r * 0.35, 0, r * 0.35, r * 0.18, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
 
       // Panel seam
       ctx.strokeStyle = '#00ffcc';
@@ -745,6 +733,9 @@
     }
 
     function draw() {
+      // Clear background cleanly with no shadow leaks
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
       ctx.fillStyle = '#04050b';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -758,8 +749,6 @@
 
       // Asteroids
       ctx.strokeStyle = '#c0d6df';
-      ctx.shadowColor = '#00ffcc';
-      ctx.shadowBlur = 8;
       ctx.lineWidth = 2;
       for (const a of asteroids) {
         ctx.save();
@@ -781,8 +770,6 @@
 
       // Lasers
       ctx.strokeStyle = '#ff3388';
-      ctx.shadowColor = '#ff3388';
-      ctx.shadowBlur = 10;
       ctx.lineWidth = 3;
       for (const l of lasers) {
         ctx.beginPath();
@@ -802,12 +789,11 @@
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.strokeStyle = p.color;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 6;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.restore();
       }
 
       // Floating Score Numbers
@@ -815,8 +801,6 @@
         ctx.save();
         ctx.globalAlpha = t.life / 35;
         ctx.fillStyle = t.color;
-        ctx.shadowColor = t.color;
-        ctx.shadowBlur = 8;
         ctx.font = 'bold 15px "Courier New", monospace';
         ctx.fillText(t.text, t.x - 12, t.y);
         ctx.restore();
